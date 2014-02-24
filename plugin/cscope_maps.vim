@@ -162,3 +162,4 @@ nmap <C-]><C-]>d :vert scs find d <C-R>=expand("<cword>")<CR><CR>
 "
 "set ttimeoutlen=100
 
+" vim: expandtab shiftwidth=4 softtabstop=4
