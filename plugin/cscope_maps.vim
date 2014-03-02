@@ -30,6 +30,12 @@ if !has("cscope")
     finish
 endif
 
+" guard against multiple loads
+if (exists("g:loaded_cscope_maps"))
+    finish
+endif
+let g:loaded_cscope_maps = 1
+
 """"""""""""" Standard cscope/vim boilerplate
 
 " use both cscope and ctag for 'ctrl-]', ':ta', and 'vim -t'
