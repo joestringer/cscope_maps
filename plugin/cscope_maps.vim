@@ -21,6 +21,17 @@
 " Happy cscoping,
 "
 " Jason Duell       jduell@alumni.princeton.edu     2002/3/7
+"
+" HISTORY:
+"
+" Christian Ludwig  chrissicool@gmail.com           2014/3/2
+"
+"  - Use autocmd to automatically find cscope.out from buffer's initial
+"    directory up to 1 level before root.
+"  - Change directory to cscope.out dir for the current buffer. Otherwise
+"    paths to tags are broken.
+"  - Maintain all loaded cscope.out files.
+"
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
@@ -36,6 +47,10 @@ if (exists("g:loaded_cscope_maps"))
 endif
 let g:loaded_cscope_maps = 1
 
+if (!exists("g:cscope_maps_debug"))
+    let g:cscope_maps_debug = 0
+endif
+
 """"""""""""" Standard cscope/vim boilerplate
 
 " use both cscope and ctag for 'ctrl-]', ':ta', and 'vim -t'
@@ -45,17 +60,98 @@ set cscopetag
 " if you want the reverse search order.
 set csto=0
 
-" add any cscope database in current directory
-if filereadable("cscope.out")
-    cs add cscope.out
-" else add the database pointed to by environment variable
-elseif $CSCOPE_DB != ""
-    cs add $CSCOPE_DB
-endif
-
 " show msg when any other cscope db added
 set cscopeverbose
 
+" setup auto commands
+if has("autocmd")
+    augroup cscope_maps
+        autocmd!
+
+        " Find cscope.out base dir and change to it when entering a buffer.
+        autocmd BufEnter * call s:Cscope_maps_find()
+    augroup END
+else
+    " add any cscope database in current directory
+    if filereadable("cscope.out")
+        cs add cscope.out
+    " else add the database pointed to by environment variable
+    elseif $CSCOPE_DB != ""
+        cs add $CSCOPE_DB
+    endif
+endif
+
+" Find the corresponding cscope.out database file for the current buffer.
+" Load the database if it was not loaded, yet.
+" Loading strategy:
+"  1. $CSCOPE_OUT (shell) environment variable
+"  2. last successfully loaded database
+"  3. iterate over all directories from the current buffer's up
+function! s:Cscope_maps_find()
+    call s:Cscope_maps_debug(1, "Find cscope.out.")
+
+    " only consider normal buffers (skip especially CommandT's GoToFile buffer)
+    if (&buftype != "")
+        return
+    endif
+
+    if $CSCOPE_DB != ""
+        let b:cscope_path = fnameescape(expand("$CSCOPE_DB", ":p:h"))
+        call s:Cscope_maps_debug(2, "From environment: " . b:cscope_path)
+    endif
+
+    if exists("b:cscope_path") && filereadable(b:cscope_path . "/cscope.out")
+        call s:Cscope_maps_debug(2, "Fast path: " . b:cscope_path)
+        call s:Cscope_maps_setdb(b:cscope_path)
+        return
+    endif
+
+    call s:Cscope_maps_debug(2, "Slow path...")
+
+    let l:modifiers = ":p:h"
+    let b:cscope_path = fnameescape(expand("%" . l:modifiers))
+
+    while b:cscope_path != "/"
+        call s:Cscope_maps_debug(3, "Trying: " . b:cscope_path)
+        if filereadable(b:cscope_path . "/cscope.out")
+            call s:Cscope_maps_setdb(b:cscope_path)
+            return
+        endif
+        let l:modifiers = l:modifiers . ":h"
+        let b:cscope_path = fnameescape(expand("%" . l:modifiers))
+    endwhile
+
+    unlet b:cscope_path
+endfunction
+
+" Set the cscope.out database file found in db_path.
+" Maintain a list of all loaded databases. Do not load a database twice.
+" Always cd into the directory the database is in for consistent tags.
+function! s:Cscope_maps_setdb(db_path)
+    let l:cscope_db = a:db_path . "/cscope.out"
+
+    if exists("s:cscope_dbs")
+        if exists("s:cscope_dbs[l:cscope_db]")
+            call s:Cscope_maps_debug(4, "Existing DB: " . l:cscope_db)
+            execute "cd! " . a:db_path
+            return
+        endif
+    else
+        call s:Cscope_maps_debug(4, "Adding first DB")
+        let s:cscope_dbs = {}
+    endif
+
+    call s:Cscope_maps_debug(4, "Adding DB: " . l:cscope_db)
+    let s:cscope_dbs[l:cscope_db] = 1
+    execute "cd! " . a:db_path
+    execute "cs add " . l:cscope_db
+endfunction
+
+function! s:Cscope_maps_debug(level, text)
+    if (g:cscope_maps_debug >= a:level)
+        echom "cscope_maps: " . a:text
+    endif
+endfunction
 
 """"""""""""" My cscope/vim key mappings
 "
