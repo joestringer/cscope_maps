@@ -192,8 +192,8 @@ endfunction
 " go back to where you were before the search.
 "
 
-nmap <C-\>s :cs find s <C-R>=expand("<cword>")<CR><CR>	
-nmap <C-\>g :cs find g <C-R>=expand("<cword>")<CR><CR>	
+nmap <C-\>s :cs find s <C-R>=expand("<cword>")<CR><CR>
+nmap <C-\>g :cs find g <C-R>=expand("<cword>")<CR><CR>
 nmap <C-\>c :cs find c <C-R>=expand("<cword>")<CR><CR>
 nmap <C-\>t :cs find t <C-R>=expand("<cword>")<CR><CR>
 nmap <C-\>e :cs find e <C-R>=expand("<cword>")<CR><CR>
@@ -208,7 +208,7 @@ nmap <C-\>d :cs find d <C-R>=expand("<cword>")<CR><CR>
 "
 " (Note: earlier versions of vim may not have the :scs command, but it
 " can be simulated roughly via:
-"    nmap <C-@>s <C-W><C-S> :cs find s <C-R>=expand("<cword>")<CR><CR>	
+"    nmap <C-@>s <C-W><C-S> :cs find s <C-R>=expand("<cword>")<CR><CR>
 
 nmap <C-]>s :scs find s <C-R>=expand("<cword>")<CR><CR>
 nmap <C-]>g :scs find g <C-R>=expand("<cword>")<CR><CR>
