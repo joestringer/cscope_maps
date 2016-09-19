@@ -61,7 +61,7 @@ set cscopetag
 set csto=0
 
 " show msg when any other cscope db added
-set cscopeverbose
+set nocscopeverbose
 
 " setup auto commands
 if has("autocmd")
